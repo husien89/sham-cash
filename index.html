@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sham Cash | Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="module" src="app.js"></script>
+</head>
+<body>
+    <div class="navbar">
+        <h1>Sham Cash</h1>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="notifications.html">Notifications <span id="notif-badge" class="badge badge-danger hidden">0</span></a>
+            <a href="settings.html">Settings</a>
+            <a href="#" onclick="auth.logout()">Logout</a>
+        </div>
+    </div>
+
+    <div class="container view">
+        <div class="grid">
+            <div class="card">
+                <h2>Scan QR Code</h2>
+                <button id="btn-scan" class="btn-primary" style="margin-top:10px;">Generate Payment QR</button>
+                <div id="qr-container" class="hidden text-center">
+                    <canvas id="qr-canvas"></canvas>
+                    <p>Scan this code to receive funds</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Quick Actions</h2>
+                <button class="btn-primary" onclick="dataManager.addTransaction(100, 'in', 'Deposit')">Add Funds (+)</button>
+                <button class="btn-danger" onclick="dataManager.addTransaction(50, 'out', 'Payment')">Send Money (-)</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="data.js"></script>
+    <script>
+        if (typeof app !== 'undefined') app.init();
+    </script>
+</body>
+</html>
