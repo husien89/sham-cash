@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShamCash | الرئيسية</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="/static/logo.png" alt="ShamCash" height="30">
+            <span>ShamCash</span>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="active">الرئيسية</a>
+            <a href="#transactions">المعاملات</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="grid">
+            <div class="card">
+                <h2>رصيدك الحالي</h2>
+                <h1 id="balance">0.00</h1>
+                <p>SHAM</p>
+            </div>
+            <div class="card">
+                <h2>توليد QR للدفع</h2>
+                <button id="btn-qr" class="btn-primary">إنشاء رمز</button>
+                <div id="qr-area" class="hidden">
+                    <canvas id="qr-canvas"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card" id="transactions">
+            <h2>آخر المعاملات</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>التاريخ</th>
+                        <th>الوصف</th>
+                        <th>المبلغ</th>
+                    </tr>
+                </thead>
+                <tbody id="tx-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
