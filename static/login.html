@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShamCash | تسجيل الدخول</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="login-page">
+    <div class="login-box">
+        <img src="/static/logo.png" alt="ShamCash" class="logo">
+        <h1>ShamCash</h1>
+        <form id="login-form">
+            <input type="text" id="username" placeholder="اسم المستخدم" required>
+            <input type="password" id="password" placeholder="كلمة المرور" required>
+            <button type="submit" class="btn-primary">دخول</button>
+        </form>
+        <p id="error" class="error-msg hidden">بيانات الدخول غير صحيحة</p>
+    </div>
+
+    <script src="/static/auth.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const u = document.getElementById('username').value;
+            const p = document.getElementById('password').value;
+            if (auth.login(u, p)) {
+                window.location.href = '/';
+            } else {
+                document.getElementById('error').classList.remove('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
