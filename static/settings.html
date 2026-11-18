@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShamCash | الإعدادات</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <img src="/static/logo.png" alt="ShamCash" height="30">
+            <span>ShamCash</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">الرئيسية</a>
+            <a href="#" class="active">الإعدادات</a>
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h2>بيانات المستخدم</h2>
+            <div id="user-info"></div>
+            <button onclick="auth.logout()" class="btn-danger">تسجيل الخروج</button>
+        </div>
+    </div>
+
+    <script src="/static/auth.js"></script>
+    <script>
+        const user = auth.getCurrentUser();
+        document.getElementById('user-info').innerHTML = `
+            <p><strong>الاسم:</strong> ${user.name}</p>
+            <p><strong>البريد:</strong> ${user.email}</p>
+            <p><strong>الدور:</strong> ${user.role}</p>
+        `;
+    </script>
+</body>
+</html>
