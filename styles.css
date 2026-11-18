@@ -1,14 +1,12 @@
 :root {
-    --primary: #0056b3;
-    --primary-dark: #004494;
-    --secondary: #6c757d;
+    /* ألوان ShamCash الرسمية */
+    --primary: #2c5aa0;       /* الأزرق الغامق في الشعار */
+    --primary-dark: #1e3f73;
+    --secondary: #4caf86;     /* الأخضر في الشعار */
+    --dark-bg: #1a202c;       /* خلفية داكنة كما في الصورة الثانية */
     --success: #28a745;
     --danger: #dc3545;
-    --light: #f8f9fa;
-    --dark: #343a40;
-    --border: #dee2e6;
-    --shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+    --light: #f8f
 
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
 body { background: #f0f2f5; color: var(--dark); line-height: 1.6; }
