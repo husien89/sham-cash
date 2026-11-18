@@ -3,31 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShamCash | تسجيل الدخول</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>تسجيل الدخول - ShamCash</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body class="login-page">
-    <div class="login-box">
-        <img src="/static/logo.png" alt="ShamCash" class="logo">
-        <h1>ShamCash</h1>
+<body style="background: var(--primary); display: flex; align-items: center; justify-content: center; height: 100vh;">
+    <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center;">
+        <img src="logo.png" alt="ShamCash" style="width: 80px; margin-bottom: 20px;">
+        <h2 style="margin-bottom: 20px; color: var(--primary);">تسجيل الدخول</h2>
         <form id="login-form">
-            <input type="text" id="username" placeholder="اسم المستخدم" required>
-            <input type="password" id="password" placeholder="كلمة المرور" required>
-            <button type="submit" class="btn-primary">دخول</button>
+            <input type="text" id="username" placeholder="اسم المستخدم" style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px;">
+            <input type="password" id="password" placeholder="كلمة المرور" style="width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px;">
+            <button type="submit" style="width: 100%; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">دخول</button>
         </form>
-        <p id="error" class="error-msg hidden">بيانات الدخول غير صحيحة</p>
+        <p id="error" style="color: red; margin-top: 10px; display: none;"></p>
     </div>
-
-    <script src="/static/auth.js"></script>
+    <script src="auth.js"></script>
     <script>
         document.getElementById('login-form').addEventListener('submit', (e) => {
             e.preventDefault();
-            const u = document.getElementById('username').value;
-            const p = document.getElementById('password').value;
-            if (auth.login(u, p)) {
-                window.location.href = '/';
+            if (auth.login(document.getElementById('username').value, document.getElementById('password').value)) {
+                window.location.href = 'index.html';
             } else {
-                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = 'بيانات خاطئة';
             }
         });
     </script>
