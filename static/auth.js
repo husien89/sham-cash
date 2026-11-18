@@ -1,13 +1,11 @@
 class Auth {
     constructor() {
         this.users = JSON.parse(localStorage.getItem('sc_users')) || [
-            { username: 'admin', password: 'admin123', role: 'admin', name: 'المدير العام', email: 'admin@shamcash.com' }
+            { username: 'admin', password: 'admin123', name: 'المدير العام', email: 'admin@shamcash.com' }
         ];
     }
 
-    save() {
-        localStorage.setItem('sc_users', JSON.stringify(this.users));
-    }
+    save() { localStorage.setItem('sc_users', JSON.stringify(this.users)); }
 
     login(username, password) {
         const user = this.users.find(u => u.username === username && u.password === password);
@@ -20,24 +18,17 @@ class Auth {
 
     register(username, password, email, name) {
         if (this.users.find(u => u.username === username)) return false;
-        const user = { username, password, email, name, role: 'user' };
-        this.users.push(user);
+        this.users.push({ username, password, email, name, role: 'user' });
         this.save();
         return true;
     }
 
     logout() {
         localStorage.removeItem('sc_session');
-        window.location.href = '/static/login.html';
+        window.location.href = 'login.html';
     }
 
-    getCurrentUser() {
-        return JSON.parse(localStorage.getItem('sc_session'));
-    }
-
-    isAuthenticated() {
-        return !!this.getCurrentUser();
-    }
+    getCurrentUser() { return JSON.parse(localStorage.getItem('sc_session')); }
+    isAuthenticated() { return !!this.getCurrentUser(); }
 }
-
 const auth = new Auth();
