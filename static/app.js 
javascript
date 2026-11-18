@@ -4,59 +4,54 @@ class App {
     }
 
     init() {
-        // التحقق من تسجيل الدخول
-        if (this.isProtectedPage() && !auth.isAuthenticated()) {
-            window.location.href = '/static/login.html';
+        if (!auth.isAuthenticated()) {
+            window.location.href = 'login.html';
             return;
         }
-
-        // تحديث الإشعارات
-        this.updateBadge();
-
-        // تحميل البيانات عند بدء التشغيل
-        dataManager.renderTransactions();
-        dataManager.renderNotifications();
-
-        // مستمعات الأحداث
-        this.initQR();
+        const user = auth.getCurrentUser();
+        this.renderTransactions();
+        this.updateBalance();
     }
 
-    isProtectedPage() {
-        const path = window.location.pathname;
-        return !path.includes('login.html');
+    renderTransactions() {
+        const list = document.getElementById('transactions-list');
+        if (!list) return;
+        list.innerHTML = dataManager.transactions.map(tx => `
+            <div class="tx-card">
+                <div class="tx-info">
+                    <h4>${tx.name}</h4>
+                    <small>${tx.date}</small>
+                </div>
+                <div class="tx-amount ${tx.type === 'in' ? 'tx-in' : 'tx-out'}">
+                    ${tx.type === 'in' ? '+' : '-'} $${Math.abs(tx.amount)}
+                </div>
+            </div>
+        `).join('');
     }
 
-    updateBadge() {
-        const badge = document.getElementById('notif-badge');
-        if (badge) {
-            const unread = dataManager.notifications.filter(n => !n.read).length;
-            badge.textContent = unread;
-            badge.style.display = unread > 0 ? 'inline-block' : 'none';
-        }
+    updateBalance() {
+        let total = 0;
+        dataManager.transactions.forEach(t => {
+            total += (t.type === 'in' ? 1 : -1) * t.amount;
+        });
+        document.getElementById('balance-display').textContent = `$ ${total.toFixed(2)}`;
     }
 
-    initQR() {
-        const btn = document.getElementById('btn-qr');
-        const area = document.getElementById('qr-area');
+    showQR() {
+        const user = auth.getCurrentUser();
+        const modal = document.getElementById('qr-modal');
+        const usernameDisplay = document.getElementById('qr-username');
         const canvas = document.getElementById('qr-canvas');
 
-        if (btn && canvas) {
-            btn.addEventListener('click', () => {
-                area.classList.remove('hidden');
-                
-                // رسم QR كود بسيط باستخدام Canvas
-                const ctx = canvas.getContext('2d');
-                canvas.width = 200;
-                canvas.height = 200;
-                
-                // خلفية
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, 200, 200);
-                
-                // نمط QR بسيط (محاكاة)
-                ctx.fillStyle = '#000000';
-                const size = 10;
-                const userId = auth.getCurrentUser()?.username || 'user';
-                
-                // توليد نمط عشوائي مستند إلى اسم المستخدم
-                let seed = userId.split('').reduce((a, b) => a +
+        usernameDisplay.textContent = user.name;
+        
+        // توليد QR كود حقيقي باسم المستخدم و ID[1]
+        const qrData = `${user.name} - ${user.username}`;
+        QRCode.toCanvas(canvas, qrData, { width: 200 }, (error) => {
+            if (error) console.error(error);
+            modal.style.display = 'flex';
+        });
+    }
+}
+
+const app = new App();
