@@ -1,0 +1,62 @@
+class App {
+    constructor() {
+        this.init();
+    }
+
+    init() {
+        // التحقق من تسجيل الدخول
+        if (this.isProtectedPage() && !auth.isAuthenticated()) {
+            window.location.href = '/static/login.html';
+            return;
+        }
+
+        // تحديث الإشعارات
+        this.updateBadge();
+
+        // تحميل البيانات عند بدء التشغيل
+        dataManager.renderTransactions();
+        dataManager.renderNotifications();
+
+        // مستمعات الأحداث
+        this.initQR();
+    }
+
+    isProtectedPage() {
+        const path = window.location.pathname;
+        return !path.includes('login.html');
+    }
+
+    updateBadge() {
+        const badge = document.getElementById('notif-badge');
+        if (badge) {
+            const unread = dataManager.notifications.filter(n => !n.read).length;
+            badge.textContent = unread;
+            badge.style.display = unread > 0 ? 'inline-block' : 'none';
+        }
+    }
+
+    initQR() {
+        const btn = document.getElementById('btn-qr');
+        const area = document.getElementById('qr-area');
+        const canvas = document.getElementById('qr-canvas');
+
+        if (btn && canvas) {
+            btn.addEventListener('click', () => {
+                area.classList.remove('hidden');
+                
+                // رسم QR كود بسيط باستخدام Canvas
+                const ctx = canvas.getContext('2d');
+                canvas.width = 200;
+                canvas.height = 200;
+                
+                // خلفية
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, 200, 200);
+                
+                // نمط QR بسيط (محاكاة)
+                ctx.fillStyle = '#000000';
+                const size = 10;
+                const userId = auth.getCurrentUser()?.username || 'user';
+                
+                // توليد نمط عشوائي مستند إلى اسم المستخدم
+                let seed = userId.split('').reduce((a, b) => a +
