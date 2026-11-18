@@ -1,28 +1,24 @@
-# Environment variables & secrets
+# Secrets & Keys
 .env
 serviceAccountKey.json
 *.pem
 *.key
 
-# Python / Backend
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
 venv/
 .venv/
 env/
 uploads/
 *.log
 .pytest_cache/
-.mypy_cache/
 
-# Node / Frontend
+# Node
 node_modules/
 dist/
 build/
 .vite/
-npm-debug.log*
 
 # IDE & OS
 .idea/
