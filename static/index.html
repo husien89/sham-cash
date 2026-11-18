@@ -3,52 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShamCash | الرئيسية</title>
-    <link rel="stylesheet" href="/static/styles.css">
+    <title>ShamCash</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">
-            <img src="/static/logo.png" alt="ShamCash" height="30">
-            <span>ShamCash</span>
-        </div>
-        <div class="nav-links">
-            <a href="#" class="active">الرئيسية</a>
-            <a href="#transactions">المعاملات</a>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="grid">
-            <div class="card">
-                <h2>رصيدك الحالي</h2>
-                <h1 id="balance">0.00</h1>
-                <p>SHAM</p>
-            </div>
-            <div class="card">
-                <h2>توليد QR للدفع</h2>
-                <button id="btn-qr" class="btn-primary">إنشاء رمز</button>
-                <div id="qr-area" class="hidden">
-                    <canvas id="qr-canvas"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <div class="card" id="transactions">
-            <h2>آخر المعاملات</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>التاريخ</th>
-                        <th>الوصف</th>
-                        <th>المبلغ</th>
-                    </tr>
-                </thead>
-                <tbody id="tx-list"></tbody>
-            </table>
+    <div class="top-nav">
+        <h1>ShamCash</h1>
+        <div>
+            <button class="icon-btn">🔔</button>
+            <img src="logo.png" alt="Logo" height="30" style="margin-right: 10px;">
         </div>
     </div>
 
-    <script src="/static/app.js"></script>
+    <div class="container">
+        <div class="balance-card">
+            <div class="currencies">
+                <button class="currency-btn active">USD</button>
+                <button class="currency-btn">EUR</button>
+                <button class="currency-btn">SYP</button>
+            </div>
+            <h2 id="balance-display">$ 500.00</h2>
+            <small>الرصيد الحالي</small>
+        </div>
+
+        <div class="actions">
+            <button class="action-btn btn-receive" onclick="app.showQR()">استقبال</button>
+            <button class="action-btn btn-send" onclick="alert('سيتم فتح صفحة التحويل')">إرسال</button>
+        </div>
+
+        <div class="grid-menu">
+            <div class="menu-item">
+                <div class="menu-icon">📄</div>
+                <div class="menu-text">فواتير</div>
+            </div>
+            <div class="menu-item">
+                <div class="menu-icon">💾</div>
+                <div class="menu-text">محفظتي</div>
+            </div>
+        </div>
+
+        <div class="section-title">آخر التحويلات</div>
+        <div id="transactions-list">
+            <!-- سيتم ملؤها بواسطة JS -->
+        </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div id="qr-modal" class="modal">
+        <div class="modal-content">
+            <h3>استقبل الأموال</h3>
+            <canvas id="qr-canvas"></canvas>
+            <p id="qr-username"></p>
+            <button class="close-modal" onclick="document.getElementById('qr-modal').style.display='none'">إغلاق</button>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a href="#" class="nav-item active"><i>🏠</i>الرئيسية</a>
+        <a href="#" class="nav-item"><i>📞</i>التحويلات</a>
+        <a href="#" class="nav-item"><i>💳</i>الخدمات</a>
+        <a href="#" class="nav-item"><i>👤</i>حسابي</a>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="data.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
