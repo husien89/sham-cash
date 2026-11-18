@@ -1,0 +1,20 @@
+<svg xmlns="http://w3.org" viewBox="0 0 500 500" width="500" height="500">
+  <defs>
+    <linearGradient id="topGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6A93F8"/>
+      <stop offset="50%" stop-color="#2846B9"/>
+      <stop offset="100%" stop-color="#4872E0"/>
+    </linearGradient>
+    <linearGradient id="bottomGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#267387"/>
+      <stop offset="50%" stop-color="#338D9B"/>
+      <stop offset="100%" stop-color="#53B0A8"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- الجزء العلوي الأزرق -->
+  <path d="M 195 140 L 375 235 C 382 239 385 245 385 253 L 385 280 C 385 288 382 294 375 298 L 325 327 C 318 331 312 330 305 326 L 265 303 C 260 300 260 294 265 291 L 310 265 C 315 262 315 256 310 253 L 200 190 C 193 186 190 180 190 172 L 190 146 C 190 140 192 138 195 140 Z" fill="url(#topGrad)"/>
+  
+  <!-- الجزء السفلي الفيروزي -->
+  <path d="M 305 385 L 125 290 C 118 286 115 280 115 272 L 115 245 C 115 237 118 231 125 227 L 175 198 C 182 194 188 195 195 199 L 235 222 C 240 225 240 231 235 234 L 190 260 C 185 263 185 269 190 272 L 300 335 C 307 339 310 345 310 353 L 310 379 C 310 385 308 387 305 385 Z" fill="url(#bottomGrad)"/>
+</svg>
