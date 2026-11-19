@@ -2,6 +2,7 @@ import math
 import os
 import re
 import sqlite3
+from contextlib import contextmanager
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
 from pathlib import Path
@@ -23,12 +24,20 @@ app.config.update(
 )
 
 
+@contextmanager
 def get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     connection = sqlite3.connect(DB_PATH, timeout=10)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
-    return connection
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def initialize_database():
@@ -87,10 +96,8 @@ def reject_cross_origin_mutations():
     if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
         return None
     origin = request.headers.get("Origin")
-    if origin:
-        allowed_origin = request.host_url.rstrip("/")
-        if origin.rstrip("/") != allowed_origin:
-            return jsonify({"success": False, "error": "طلب منشؤه غير مسموح"}), 403
+    if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
+        return jsonify({"success": False, "error": "طلب منشؤه غير مسموح"}), 403
     return None
 
 

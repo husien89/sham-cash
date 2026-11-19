@@ -22,20 +22,16 @@ class App {
                 if (event.target === modal) modal.hidden = true;
             });
         });
-
         document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') {
-                document.querySelectorAll('.modal').forEach((modal) => { modal.hidden = true; });
-            }
+            if (event.key === 'Escape') document.querySelectorAll('.modal').forEach((modal) => { modal.hidden = true; });
         });
     }
 
     renderBalance() {
         const balance = document.getElementById('balance-display');
-        if (balance) {
-            const amount = Number(this.currentUser?.balance);
-            balance.textContent = `$ ${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}`;
-        }
+        if (!balance) return;
+        const amount = Number(this.currentUser?.balance);
+        balance.textContent = `$ ${Number.isFinite(amount) ? amount.toFixed(2) : '0.00'}`;
     }
 
     async loadTransactions() {
@@ -52,32 +48,35 @@ class App {
     renderTransactions(transactions, errorMessage = '') {
         const list = document.getElementById('transactions-list');
         if (!list) return;
-        if (errorMessage) {
-            const message = document.createElement('p');
-            message.className = 'empty';
-            message.textContent = errorMessage;
-            list.replaceChildren(message);
-            return;
-        }
-        if (!transactions.length) {
-            const message = document.createElement('p');
-            message.className = 'empty';
-            message.textContent = 'لا توجد تحويلات بعد';
-            list.replaceChildren(message);
-            return;
-        }
+        if (errorMessage) return this.showListMessage(errorMessage);
+        if (!transactions.length) return this.showListMessage('لا توجد تحويلات بعد');
+
         list.replaceChildren(...transactions.map((transaction) => {
             const item = document.createElement('div');
-            item.className = `transaction ${transaction.direction}`;
+            item.className = `transaction ${transaction.direction === 'in' ? 'in' : 'out'}`;
+            const details = document.createElement('div');
             const name = document.createElement('span');
             name.textContent = transaction.name;
+            const date = document.createElement('div');
+            date.className = 'meta';
+            date.textContent = transaction.created_at;
+            details.append(name, date);
+
             const amount = document.createElement('strong');
             amount.className = 'amount';
-            const sign = transaction.direction === 'out' ? '-' : '+';
-            amount.textContent = `${sign}$${Number(transaction.amount).toFixed(2)}`;
-            item.append(name, amount);
+            amount.textContent = `${transaction.direction === 'out' ? '-' : '+'}$${Number(transaction.amount).toFixed(2)}`;
+            item.append(details, amount);
             return item;
         }));
+    }
+
+    showListMessage(text) {
+        const list = document.getElementById('transactions-list');
+        if (!list) return;
+        const message = document.createElement('p');
+        message.className = 'empty';
+        message.textContent = text;
+        list.replaceChildren(message);
     }
 
     async showQR() {
@@ -91,9 +90,8 @@ class App {
             return;
         }
 
-        const qrData = `shamcash://pay?user=${encodeURIComponent(this.currentUser.username)}`;
         try {
-            await QRCode.toCanvas(canvas, qrData, { width: 200, margin: 2 });
+            await QRCode.toCanvas(canvas, `shamcash://pay?user=${encodeURIComponent(this.currentUser.username)}`, { width: 200, margin: 2 });
             usernameDisplay.textContent = `اسم المستخدم: ${this.currentUser.username}`;
         } catch (error) {
             console.error('QR generation failed:', error);
@@ -125,14 +123,13 @@ class App {
         const form = event.currentTarget;
         const values = new FormData(form);
         const recipient = String(values.get('recipient') || '').trim();
-        const amountValue = String(values.get('amount') || '').trim();
-        const amount = Number(amountValue);
+        const amount = Number(String(values.get('amount') || '').trim());
         const errorBox = document.getElementById('send-error');
         const submit = form.querySelector('[type="submit"]');
         errorBox.hidden = true;
 
-        if (!recipient) {
-            errorBox.textContent = 'اسم المستلم مطلوب';
+        if (!recipient || recipient.length > 32) {
+            errorBox.textContent = 'أدخل اسم مستخدم صحيحاً للمستلم';
             errorBox.hidden = false;
             return;
         }
@@ -148,7 +145,7 @@ class App {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: recipient, amount }),
+                body: JSON.stringify({ recipient, amount }),
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'تعذر تنفيذ التحويل');
