@@ -1,2 +1,13 @@
-# sham-cash
-for pay for my money and you can receive the money immediately you will get the money 
+# ShamCash
+
+نموذج محفظة ويب عربي يستخدم Flask وجلسات الخادم، مع تخزين SQLite محلي وكلمات مرور مجزأة بواسطة Werkzeug.
+
+## التشغيل المحلي
+
+1. استخدم Python 3.9 أو أحدث.
+2. أنشئ بيئة افتراضية وثبّت المتطلبات: `python -m pip install -r requirements.txt`.
+3. اضبط مفتاح جلسات ثابتاً قبل التشغيل، مثلاً `SECRET_KEY` بقيمة عشوائية قوية.
+4. شغّل `python main.py` وافتح `http://127.0.0.1:5000`.
+5. أنشئ حساباً من شاشة الدخول. قاعدة البيانات تُنشأ في `shamcash.sqlite3`؛ ويمكن تحديد مسارها عبر `DATABASE_PATH`.
+
+في الإنتاج استخدم HTTPS واضبط `COOKIE_SECURE=true` و`SECRET_KEY` من مدير أسرار البيئة. لا تضع مفاتيح Firebase أو أسراراً في ملفات JavaScript العامة. هذا الإصدار نموذج أولي؛ لا ينفذ تحويل أموال حقيقياً ولا يوفر مزود دفع أو تخزيناً سحابياً.
