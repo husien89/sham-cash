@@ -32,4 +32,5 @@ input { width: 100%; border: 1px solid #ccd7d0; border-radius: 9px; padding: 12p
 .transaction.out .amount { color: #b42318; }
 .transaction.in .amount { color: #147d52; }
 .empty { color: #66736c; text-align: center; }
+.transaction .meta { color: #66736c; font-size: .85rem; }
 @media (max-width: 500px) { .actions { grid-template-columns: 1fr; } }

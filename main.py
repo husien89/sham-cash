@@ -2,6 +2,7 @@ import math
 import os
 import re
 import sqlite3
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from functools import wraps
 from pathlib import Path
 
@@ -78,7 +79,6 @@ def authenticated(view):
         if "username" not in session:
             return jsonify({"success": False, "error": "غير مصادق"}), 401
         return view(*args, **kwargs)
-
     return wrapped
 
 
@@ -87,8 +87,10 @@ def reject_cross_origin_mutations():
     if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
         return None
     origin = request.headers.get("Origin")
-    if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
-        return jsonify({"success": False, "error": "طلب منشؤه غير مسموح"}), 403
+    if origin:
+        allowed_origin = request.host_url.rstrip("/")
+        if origin.rstrip("/") != allowed_origin:
+            return jsonify({"success": False, "error": "طلب منشؤه غير مسموح"}), 403
     return None
 
 
@@ -202,40 +204,57 @@ def create_transaction():
     data = json_body()
     if data is None:
         return jsonify({"success": False, "error": "طلب غير صالح"}), 400
-    name = str(data.get("name", "")).strip()
+
+    recipient = str(data.get("recipient") or data.get("name") or "").strip()
     raw_amount = data.get("amount")
     if isinstance(raw_amount, bool):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
     try:
-        amount = float(raw_amount)
-    except (TypeError, ValueError):
+        amount = Decimal(str(raw_amount)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    except (InvalidOperation, TypeError, ValueError):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
-    if not math.isfinite(amount):
+    if not math.isfinite(float(amount)):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
-    amount = round(amount, 2)
-    if not name or len(name) > 100:
+    if not recipient or len(recipient) > 32:
         return jsonify({"success": False, "error": "اسم المستلم غير صالح"}), 400
-    if amount <= 0 or amount > 100000:
+    if amount <= 0 or amount > Decimal("100000"):
         return jsonify({"success": False, "error": "المبلغ يجب أن يكون أكبر من صفر وأقل من 100000"}), 400
 
-    username = session["username"]
+    sender = session["username"]
+    if recipient == sender:
+        return jsonify({"success": False, "error": "لا يمكنك التحويل لنفس الحساب"}), 400
+
     with get_db() as db:
         db.execute("BEGIN IMMEDIATE")
-        user = db.execute("SELECT balance FROM users WHERE username = ?", (username,)).fetchone()
-        if user is None:
+        sender_row = db.execute("SELECT username, balance FROM users WHERE username = ?", (sender,)).fetchone()
+        recipient_row = db.execute("SELECT username, name, balance FROM users WHERE username = ?", (recipient,)).fetchone()
+        if sender_row is None:
             db.rollback()
             return jsonify({"success": False, "error": "المستخدم غير موجود"}), 401
-        balance = round(float(user["balance"]), 2)
-        if balance < amount:
+        if recipient_row is None:
+            db.rollback()
+            return jsonify({"success": False, "error": "المستلم غير موجود"}), 404
+
+        sender_balance = Decimal(str(sender_row["balance"])).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if sender_balance < amount:
             db.rollback()
             return jsonify({"success": False, "error": "الرصيد غير كاف"}), 400
-        updated_balance = round(balance - amount, 2)
-        db.execute("UPDATE users SET balance = ? WHERE username = ?", (updated_balance, username))
+
+        recipient_balance = Decimal(str(recipient_row["balance"])).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        updated_sender = sender_balance - amount
+        updated_recipient = recipient_balance + amount
+
+        db.execute("UPDATE users SET balance = ? WHERE username = ?", (float(updated_sender), sender))
+        db.execute("UPDATE users SET balance = ? WHERE username = ?", (float(updated_recipient), recipient))
         db.execute(
             "INSERT INTO transactions (username, name, amount, direction) VALUES (?, ?, ?, 'out')",
-            (username, name, amount),
+            (sender, recipient_row["name"] or recipient, float(amount)),
         )
-    return jsonify({"success": True, "balance": updated_balance})
+        db.execute(
+            "INSERT INTO transactions (username, name, amount, direction) VALUES (?, ?, ?, 'in')",
+            (recipient, sender_row["username"], float(amount)),
+        )
+    return jsonify({"success": True, "balance": float(updated_sender), "recipient": recipient})
 
 
 @app.errorhandler(404)
