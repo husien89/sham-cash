@@ -1,4 +1,5 @@
 import os
+import math
 import re
 import sqlite3
 from functools import wraps
@@ -11,8 +12,13 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", BASE_DIR / "shamcash.sqlite3"))
 
 app = Flask(__name__, static_folder="static")
+secret_key = os.environ.get("SECRET_KEY")
+if not secret_key:
+    secret_key = os.environ.get("FLASK_SECRET_KEY")
+if not secret_key:
+    secret_key = os.urandom(32)
 app.config.update(
-    SECRET_KEY=os.environ.get("SECRET_KEY") or os.urandom(32),
+    SECRET_KEY=secret_key,
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
@@ -31,7 +37,7 @@ def initialize_database():
     with get_db() as db:
         db.execute("""CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password_hash TEXT NOT NULL,
+            password_hash TEXT NOT NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL DEFAULT '',
             balance REAL NOT NULL DEFAULT 500,
@@ -64,7 +70,7 @@ def public_user(row):
         "username": row["username"],
         "name": row["name"],
         "email": row["email"],
-        "balance": row["balance"],
+        "balance": round(float(row["balance"]), 2),
         "role": row["role"],
     }
 
@@ -106,8 +112,12 @@ def register():
         return jsonify({"success": False, "error": "اسم المستخدم يجب أن يكون 3-32 حرفاً أو رقماً أو _"}), 400
     if not isinstance(password, str) or len(password) < 10 or len(password) > 1024:
         return jsonify({"success": False, "error": "كلمة المرور يجب ألا تقل عن 10 أحرف"}), 400
-    if not name or len(name) > 100 or len(email) > 254:
-        return jsonify({"success": False, "error": "الاسم أو البريد الإلكتروني غير صالح"}), 400
+    if not name or len(name) > 100:
+        return jsonify({"success": False, "error": "الاسم غير صالح"}), 400
+    if len(email) > 254:
+        return jsonify({"success": False, "error": "البريد الإلكتروني غير صالح"}), 400
+    if email and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", email):
+        return jsonify({"success": False, "error": "البريد الإلكتروني غير صالح"}), 400
 
     try:
         with get_db() as db:
@@ -184,11 +194,14 @@ def create_transaction():
         amount = float(data.get("amount"))
     except (TypeError, ValueError):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
+    if not math.isfinite(amount):
+        return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
     if not name or len(name) > 100:
         return jsonify({"success": False, "error": "اسم المستلم غير صالح"}), 400
     if amount <= 0 or amount > 100000:
         return jsonify({"success": False, "error": "المبلغ يجب أن يكون أكبر من صفر وأقل من 100000"}), 400
 
+    amount = round(amount, 2)
     username = session["username"]
     with get_db() as db:
         db.execute("BEGIN IMMEDIATE")
@@ -196,16 +209,17 @@ def create_transaction():
         if user is None:
             db.rollback()
             return jsonify({"success": False, "error": "المستخدم غير موجود"}), 401
-        if round(float(user["balance"]), 2) < round(amount, 2):
+        balance = round(float(user["balance"]), 2)
+        if balance < amount:
             db.rollback()
             return jsonify({"success": False, "error": "الرصيد غير كاف"}), 400
-        db.execute("UPDATE users SET balance = balance - ? WHERE username = ?", (round(amount, 2), username))
+        updated_balance = round(balance - amount, 2)
+        db.execute("UPDATE users SET balance = ? WHERE username = ?", (updated_balance, username))
         db.execute(
             "INSERT INTO transactions (username, name, amount, direction) VALUES (?, ?, ?, 'out')",
-            (username, name, round(amount, 2)),
+            (username, name, amount),
         )
-        updated = db.execute("SELECT balance FROM users WHERE username = ?", (username,)).fetchone()
-    return jsonify({"success": True, "balance": updated["balance"]})
+    return jsonify({"success": True, "balance": updated_balance})
 
 
 if __name__ == "__main__":

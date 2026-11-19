@@ -22,6 +22,12 @@ class App {
                 if (event.target === modal) modal.hidden = true;
             });
         });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                document.querySelectorAll('.modal').forEach((modal) => { modal.hidden = true; });
+            }
+        });
     }
 
     renderBalance() {
@@ -47,12 +53,17 @@ class App {
         const list = document.getElementById('transactions-list');
         if (!list) return;
         if (errorMessage) {
-            list.innerHTML = `<p class="empty"></p>`;
-            list.firstElementChild.textContent = errorMessage;
+            const message = document.createElement('p');
+            message.className = 'empty';
+            message.textContent = errorMessage;
+            list.replaceChildren(message);
             return;
         }
         if (!transactions.length) {
-            list.innerHTML = '<p class="empty">لا توجد تحويلات بعد</p>';
+            const message = document.createElement('p');
+            message.className = 'empty';
+            message.textContent = 'لا توجد تحويلات بعد';
+            list.replaceChildren(message);
             return;
         }
         list.replaceChildren(...transactions.map((transaction) => {
@@ -98,7 +109,10 @@ class App {
 
     showSend() {
         const modal = document.getElementById('send-modal');
-        if (modal) modal.hidden = false;
+        if (modal) {
+            modal.hidden = false;
+            document.getElementById('recipient')?.focus();
+        }
     }
 
     hideSend() {
@@ -110,17 +124,31 @@ class App {
         event.preventDefault();
         const form = event.currentTarget;
         const values = new FormData(form);
+        const recipient = String(values.get('recipient') || '').trim();
+        const amountValue = String(values.get('amount') || '').trim();
+        const amount = Number(amountValue);
         const errorBox = document.getElementById('send-error');
         const submit = form.querySelector('[type="submit"]');
         errorBox.hidden = true;
-        submit.disabled = true;
 
+        if (!recipient) {
+            errorBox.textContent = 'اسم المستلم مطلوب';
+            errorBox.hidden = false;
+            return;
+        }
+        if (!Number.isFinite(amount) || amount <= 0 || amount > 100000) {
+            errorBox.textContent = 'المبلغ غير صالح';
+            errorBox.hidden = false;
+            return;
+        }
+
+        submit.disabled = true;
         try {
             const response = await fetch('/api/transactions', {
                 method: 'POST',
                 credentials: 'same-origin',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: values.get('recipient').trim(), amount: values.get('amount') }),
+                body: JSON.stringify({ name: recipient, amount }),
             });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || 'تعذر تنفيذ التحويل');
@@ -135,11 +163,6 @@ class App {
         } finally {
             submit.disabled = false;
         }
-    }
-
-    hideQR() {
-        const modal = document.getElementById('qr-modal');
-        if (modal) modal.hidden = true;
     }
 }
 

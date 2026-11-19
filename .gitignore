@@ -3,11 +3,11 @@ __pycache__/
 *.py[cod]
 *.sqlite3
 
-# Local environments
+# Environments
 .venv/
 venv/
 .env
 
-# Editors and OS files
+# Local uploads and editor files
 .vscode/
 .DS_Store
