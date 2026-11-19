@@ -13,7 +13,7 @@ button:disabled { opacity: .6; cursor: wait; }
 .balance-card { text-align: center; }
 .balance-card p { color: #66736c; }
 .balance-card h2 { font-size: 2.4rem; margin: 8px 0; }
-.actions { margin-top: 20px; }
+.actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 20px; }
 .actions button { width: 100%; }
 .auth-page { display: grid; place-items: center; padding: 20px; }
 .auth-card { width: min(440px, 100%); }
@@ -24,5 +24,12 @@ input { width: 100%; border: 1px solid #ccd7d0; border-radius: 9px; padding: 12p
 .error { color: #b42318; }
 .modal { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; padding: 20px; background: #0c201899; }
 .modal[hidden] { display: none; }
-.modal-card { width: min(360px, 100%); text-align: center; }
+.modal-card { width: min(460px, 100%); text-align: center; }
 .modal-card canvas { max-width: 100%; height: auto; }
+.modal-card input { margin: 10px 0; }
+.section-title { margin: 28px 0 12px; }
+.transaction { display: flex; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid #edf1ef; }
+.transaction.out .amount { color: #b42318; }
+.transaction.in .amount { color: #147d52; }
+.empty { color: #66736c; text-align: center; }
+@media (max-width: 500px) { .actions { grid-template-columns: 1fr; } }

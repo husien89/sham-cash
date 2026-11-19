@@ -10,20 +10,41 @@
   <script defer src="/static/app.js"></script>
 </head>
 <body>
-  <header class="topbar"><h1>ShamCash</h1><button id="logout-button" class="secondary">تسجيل الخروج</button></header>
+  <header class="topbar"><h1>ShamCash</h1><button id="logout-button" class="secondary" type="button">تسجيل الخروج</button></header>
   <main class="container">
     <section class="card balance-card">
       <p>الرصيد الحالي</p>
       <h2 id="balance-display">$ 0.00</h2>
     </section>
-    <section class="actions"><button class="btn-receive" type="button">استقبال الأموال</button></section>
+    <section class="actions">
+      <button class="btn-receive" type="button">استقبال الأموال</button>
+      <button class="btn-send" type="button">إرسال الأموال</button>
+    </section>
+    <h3 class="section-title">آخر التحويلات</h3>
+    <section id="transactions-list" class="card"><p class="empty">جاري التحميل...</p></section>
   </main>
+
   <div id="qr-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="qr-title">
     <section class="card modal-card">
       <h2 id="qr-title">استقبل الأموال</h2>
       <canvas id="qr-canvas" aria-label="رمز QR للدفع"></canvas>
       <p id="qr-username"></p>
       <button id="close-qr" class="secondary" type="button">إغلاق</button>
+    </section>
+  </div>
+
+  <div id="send-modal" class="modal" hidden role="dialog" aria-modal="true" aria-labelledby="send-title">
+    <section class="card modal-card">
+      <h2 id="send-title">إرسال الأموال</h2>
+      <form id="send-form">
+        <label for="recipient">اسم المستلم</label>
+        <input id="recipient" name="recipient" maxlength="100" required>
+        <label for="amount">المبلغ بالدولار</label>
+        <input id="amount" name="amount" type="number" min="0.01" max="100000" step="0.01" required>
+        <p id="send-error" class="error" role="alert" hidden></p>
+        <button type="submit">تأكيد التحويل التجريبي</button>
+      </form>
+      <button id="close-send" class="secondary" type="button">إغلاق</button>
     </section>
   </div>
 </body>

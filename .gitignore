@@ -1,2 +1,13 @@
-# Google App Engine generated folder
-appengine-generated/
+# Python
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# Local environments
+.venv/
+venv/
+.env
+
+# Editors and OS files
+.vscode/
+.DS_Store

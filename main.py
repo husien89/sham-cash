@@ -29,16 +29,24 @@ def get_db():
 
 def initialize_database():
     with get_db() as db:
-        db.execute(
-            """CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                password_hash TEXT NOT NULL,
-                name TEXT NOT NULL,
-                email TEXT NOT NULL DEFAULT '',
-                balance REAL NOT NULL DEFAULT 0,
-                role TEXT NOT NULL DEFAULT 'user'
-            )"""
-        )
+        db.execute("""CREATE TABLE IF NOT EXISTS users (
+            username TEXT PRIMARY KEY,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL DEFAULT '',
+            balance REAL NOT NULL DEFAULT 500,
+            role TEXT NOT NULL DEFAULT 'user'
+        )""")
+        db.execute("""CREATE TABLE IF NOT EXISTS transactions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            name TEXT NOT NULL,
+            amount REAL NOT NULL,
+            direction TEXT NOT NULL CHECK(direction IN ('in', 'out')),
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(username) REFERENCES users(username)
+        )""")
+        db.execute("CREATE INDEX IF NOT EXISTS transactions_username_id ON transactions(username, id DESC)")
 
 
 initialize_database()
@@ -73,6 +81,8 @@ def authenticated(view):
 
 @app.get("/")
 def home():
+    if "username" in session:
+        return send_from_directory(app.static_folder, "index.html")
     return send_from_directory(app.static_folder, "login.html")
 
 
@@ -88,18 +98,13 @@ def register():
     if data is None:
         return jsonify({"success": False, "error": "طلب غير صالح"}), 400
 
-    username = data.get("username", "")
+    username = str(data.get("username", "")).strip()
     password = data.get("password", "")
-    name = data.get("name", "")
-    email = data.get("email", "")
-    if not all(isinstance(value, str) for value in (username, password, name, email)):
-        return jsonify({"success": False, "error": "البيانات غير صالحة"}), 400
-    username = username.strip()
-    name = name.strip()
-    email = email.strip()
+    name = str(data.get("name", "")).strip()
+    email = str(data.get("email", "")).strip()
     if not re.fullmatch(r"[A-Za-z0-9_]{3,32}", username):
         return jsonify({"success": False, "error": "اسم المستخدم يجب أن يكون 3-32 حرفاً أو رقماً أو _"}), 400
-    if len(password) < 10 or len(password) > 1024:
+    if not isinstance(password, str) or len(password) < 10 or len(password) > 1024:
         return jsonify({"success": False, "error": "كلمة المرور يجب ألا تقل عن 10 أحرف"}), 400
     if not name or len(name) > 100 or len(email) > 254:
         return jsonify({"success": False, "error": "الاسم أو البريد الإلكتروني غير صالح"}), 400
@@ -116,7 +121,7 @@ def register():
     session.clear()
     session["username"] = username
     session.permanent = True
-    return jsonify({"success": True, "user": {"username": username, "name": name, "email": email, "balance": 0, "role": "user"}}), 201
+    return jsonify({"success": True, "user": {"username": username, "name": name, "email": email, "balance": 500, "role": "user"}}), 201
 
 
 @app.post("/api/login")
@@ -155,6 +160,52 @@ def current_user():
         session.clear()
         return jsonify({"success": False, "error": "المستخدم غير موجود"}), 401
     return jsonify({"success": True, "user": public_user(user)})
+
+
+@app.get("/api/transactions")
+@authenticated
+def transactions():
+    with get_db() as db:
+        rows = db.execute(
+            "SELECT id, name, amount, direction, created_at FROM transactions WHERE username = ? ORDER BY id DESC LIMIT 100",
+            (session["username"],),
+        ).fetchall()
+    return jsonify({"success": True, "transactions": [dict(row) for row in rows]})
+
+
+@app.post("/api/transactions")
+@authenticated
+def create_transaction():
+    data = json_body()
+    if data is None:
+        return jsonify({"success": False, "error": "طلب غير صالح"}), 400
+    name = str(data.get("name", "")).strip()
+    try:
+        amount = float(data.get("amount"))
+    except (TypeError, ValueError):
+        return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
+    if not name or len(name) > 100:
+        return jsonify({"success": False, "error": "اسم المستلم غير صالح"}), 400
+    if amount <= 0 or amount > 100000:
+        return jsonify({"success": False, "error": "المبلغ يجب أن يكون أكبر من صفر وأقل من 100000"}), 400
+
+    username = session["username"]
+    with get_db() as db:
+        db.execute("BEGIN IMMEDIATE")
+        user = db.execute("SELECT balance FROM users WHERE username = ?", (username,)).fetchone()
+        if user is None:
+            db.rollback()
+            return jsonify({"success": False, "error": "المستخدم غير موجود"}), 401
+        if round(float(user["balance"]), 2) < round(amount, 2):
+            db.rollback()
+            return jsonify({"success": False, "error": "الرصيد غير كاف"}), 400
+        db.execute("UPDATE users SET balance = balance - ? WHERE username = ?", (round(amount, 2), username))
+        db.execute(
+            "INSERT INTO transactions (username, name, amount, direction) VALUES (?, ?, ?, 'out')",
+            (username, name, round(amount, 2)),
+        )
+        updated = db.execute("SELECT balance FROM users WHERE username = ?", (username,)).fetchone()
+    return jsonify({"success": True, "balance": updated["balance"]})
 
 
 if __name__ == "__main__":
