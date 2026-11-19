@@ -1,5 +1,5 @@
-import os
 import math
+import os
 import re
 import sqlite3
 from functools import wraps
@@ -12,13 +12,9 @@ BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = Path(os.environ.get("DATABASE_PATH", BASE_DIR / "shamcash.sqlite3"))
 
 app = Flask(__name__, static_folder="static")
-secret_key = os.environ.get("SECRET_KEY")
-if not secret_key:
-    secret_key = os.environ.get("FLASK_SECRET_KEY")
-if not secret_key:
-    secret_key = os.urandom(32)
+secret_key = os.environ.get("SECRET_KEY") or os.environ.get("FLASK_SECRET_KEY")
 app.config.update(
-    SECRET_KEY=secret_key,
+    SECRET_KEY=secret_key or os.urandom(32),
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=os.environ.get("COOKIE_SECURE", "false").lower() == "true",
@@ -28,8 +24,9 @@ app.config.update(
 
 def get_db():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(DB_PATH)
+    connection = sqlite3.connect(DB_PATH, timeout=10)
     connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
     return connection
 
 
@@ -37,7 +34,7 @@ def initialize_database():
     with get_db() as db:
         db.execute("""CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password_hash TEXT NOT NOT NULL,
+            password_hash TEXT NOT NULL,
             name TEXT NOT NULL,
             email TEXT NOT NULL DEFAULT '',
             balance REAL NOT NULL DEFAULT 500,
@@ -85,17 +82,33 @@ def authenticated(view):
     return wrapped
 
 
+@app.before_request
+def reject_cross_origin_mutations():
+    if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+        return None
+    origin = request.headers.get("Origin")
+    if origin and origin.rstrip("/") != request.host_url.rstrip("/"):
+        return jsonify({"success": False, "error": "طلب منشؤه غير مسموح"}), 403
+    return None
+
+
 @app.get("/")
 def home():
-    if "username" in session:
-        return send_from_directory(app.static_folder, "index.html")
-    return send_from_directory(app.static_folder, "login.html")
+    page = "index.html" if "username" in session else "login.html"
+    return send_from_directory(app.static_folder, page)
 
 
 @app.get("/wallet")
 @authenticated
 def wallet():
     return send_from_directory(app.static_folder, "index.html")
+
+
+@app.get("/api/health")
+def health():
+    with get_db() as db:
+        db.execute("SELECT 1").fetchone()
+    return jsonify({"success": True, "status": "ok"})
 
 
 @app.post("/api/register")
@@ -190,18 +203,21 @@ def create_transaction():
     if data is None:
         return jsonify({"success": False, "error": "طلب غير صالح"}), 400
     name = str(data.get("name", "")).strip()
+    raw_amount = data.get("amount")
+    if isinstance(raw_amount, bool):
+        return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
     try:
-        amount = float(data.get("amount"))
+        amount = float(raw_amount)
     except (TypeError, ValueError):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
     if not math.isfinite(amount):
         return jsonify({"success": False, "error": "المبلغ غير صالح"}), 400
+    amount = round(amount, 2)
     if not name or len(name) > 100:
         return jsonify({"success": False, "error": "اسم المستلم غير صالح"}), 400
     if amount <= 0 or amount > 100000:
         return jsonify({"success": False, "error": "المبلغ يجب أن يكون أكبر من صفر وأقل من 100000"}), 400
 
-    amount = round(amount, 2)
     username = session["username"]
     with get_db() as db:
         db.execute("BEGIN IMMEDIATE")
@@ -220,6 +236,16 @@ def create_transaction():
             (username, name, amount),
         )
     return jsonify({"success": True, "balance": updated_balance})
+
+
+@app.errorhandler(404)
+def not_found(_error):
+    return jsonify({"success": False, "error": "المورد غير موجود"}), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(_error):
+    return jsonify({"success": False, "error": "الطريقة غير مسموحة"}), 405
 
 
 if __name__ == "__main__":
