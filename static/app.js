@@ -1,17 +1,29 @@
-// QR Code Generation
-document.getElementById('btn-qr')?.addEventListener('click', () => {
+// ShamCash demo application
+const ShamCashApp = {
+  showQR() {
+    const modal = document.getElementById('qr-modal');
     const canvas = document.getElementById('qr-canvas');
-    const qrArea = document.getElementById('qr-area');
-    
-    // إنشاء QR بسيط يحتوي على معرف المستخدم
-    const userId = auth.getCurrentUser()?.id || 'guest';
-    const qrData = `shamcash://pay?user=${userId}`;
-    
-    // رسم QR كود بسيط (يمكن استخدام مكتبة QRCode.js هنا)
-    const ctx = canvas.getContext('2d');
-    canvas.width = 200;
-    canvas.height = 200;
-    
-    // نمط QR بسيط
-    ctx.fillStyle = 'white';
-    ctx.fillRect(0, 0
+    const label = document.getElementById('qr-username');
+    if (!modal || !canvas || !label) return;
+
+    const username = auth?.getCurrentUser?.()?.username || 'guest';
+    const data = `shamcash://demo?user=${encodeURIComponent(username)} `;
+
+    modal.style.display = 'flex';
+    label.textContent = `وضع تجريبي — ${username}`;
+
+    if (window.QRCode) {
+      canvas.style.display = 'none';
+      let image = canvas.nextElementSibling;
+      if (!image || image.tagName !== 'IMG') {
+        image = document.createElement('img');
+        canvas.insertAdjacentElement('afterend', image);
+      }
+      QRCode.toDataURL(data, { width: 200, margin: 1 }, (error, url) => {
+        if (!error) image.src = url;
+      });
+    }
+  }
+};
+
+window.app = ShamCashApp;
