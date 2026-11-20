@@ -1,73 +1,69 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ShamCash</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e3a8a">
+  <title>ShamCash تجريبي</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="icon" href="shamcash-logo.svg" type="image/svg+xml">
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
 </head>
 <body>
-    <div class="top-nav">
-        <h1>ShamCash</h1>
-        <div>
-            <button class="icon-btn">🔔</button>
-            <img src="logo.svg" alt="Logo" height="30" style="margin-right: 10px;">
-        </div>
+  <div class="top-nav">
+    <h1>ShamCash</h1>
+    <img src="shamcash-logo.svg" alt="ShamCash" height="30">
+  </div>
+
+  <main class="container">
+    <section class="balance-card">
+      <div class="currencies">
+        <button class="currency-btn active" type="button">USD</button>
+        <button class="currency-btn" type="button">EUR</button>
+        <button class="currency-btn" type="button">SYP</button>
+      </div>
+      <h2 id="balance-display">$ 500.00</h2>
+      <small>بيانات تجريبية غير مالية</small>
+    </section>
+
+    <section class="actions">
+      <button class="action-btn btn-receive" type="button" onclick="app.showQR()">استقبال تجريبي</button>
+      <button class="action-btn btn-send" type="button" onclick="alert('التحويل الحقيقي غير متاح في النسخة التجريبية')">إرسال</button>
+    </section>
+
+    <div class="grid-menu">
+      <div class="menu-item"><div class="menu-icon">📄</div><div class="menu-text">فواتير</div></div>
+      <div class="menu-item"><div class="menu-icon">💾</div><div class="menu-text">محفظتي</div></div>
     </div>
 
-    <div class="container">
-        <div class="balance-card">
-            <div class="currencies">
-                <button class="currency-btn active">USD</button>
-                <button class="currency-btn">EUR</button>
-                <button class="currency-btn">SYP</button>
-            </div>
-            <h2 id="balance-display">$ 500.00</h2>
-            <small>الرصيد الحالي</small>
-        </div>
+    <h2 class="section-title">آخر التحويلات التجريبية</h2>
+    <div id="transactions-list"></div>
+  </main>
 
-        <div class="actions">
-            <button class="action-btn btn-receive" onclick="app.showQR()">استقبال</button>
-            <button class="action-btn btn-send" onclick="alert('سيتم فتح صفحة التحويل')">إرسال</button>
-        </div>
-
-        <div class="grid-menu">
-            <div class="menu-item">
-                <div class="menu-icon">📄</div>
-                <div class="menu-text">فواتير</div>
-            </div>
-            <div class="menu-item">
-                <div class="menu-icon">💾</div>
-                <div class="menu-text">محفظتي</div>
-            </div>
-        </div>
-
-        <div class="section-title">آخر التحويلات</div>
-        <div id="transactions-list">
-            <!-- سيتم ملؤها بواسطة JS -->
-        </div>
+  <div id="qr-modal" class="modal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <h3>QR تجريبي</h3>
+      <canvas id="qr-canvas" width="200" height="200"></canvas>
+      <p id="qr-username"></p>
+      <button class="close-modal" type="button" onclick="document.getElementById('qr-modal').style.display='none'">إغلاق</button>
     </div>
+  </div>
 
-    <!-- QR Modal -->
-    <div id="qr-modal" class="modal">
-        <div class="modal-content">
-            <h3>استقبل الأموال</h3>
-            <canvas id="qr-canvas"></canvas>
-            <p id="qr-username"></p>
-            <button class="close-modal" onclick="document.getElementById('qr-modal').style.display='none'">إغلاق</button>
-        </div>
-    </div>
+  <nav class="bottom-nav" aria-label="التنقل">
+    <a href="index.html" class="nav-item active"><i>🏠</i>الرئيسية</a>
+    <a href="#transactions-list" class="nav-item"><i>📞</i>التحويلات</a>
+    <a href="#" class="nav-item"><i>💳</i>الخدمات</a>
+    <a href="settings.html" class="nav-item"><i>👤</i>حسابي</a>
+  </nav>
 
-    <div class="bottom-nav">
-        <a href="#" class="nav-item active"><i>🏠</i>الرئيسية</a>
-        <a href="#" class="nav-item"><i>📞</i>التحويلات</a>
-        <a href="#" class="nav-item"><i>💳</i>الخدمات</a>
-        <a href="#" class="nav-item"><i>👤</i>حسابي</a>
-    </div>
-
-    <script src="auth.js"></script>
-    <script src="data.js"></script>
-    <script src="app.js"></script>
+  <script src="auth.js"></script>
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
+    }
+  </script>
 </body>
 </html>
