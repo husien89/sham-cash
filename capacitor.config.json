@@ -1,0 +1,6 @@
+{
+  "appId": "com.shamcash.demo",
+  "appName": "ShamCash Demo",
+  "webDir": "static",
+  "bundledWebRuntime": false
+}
